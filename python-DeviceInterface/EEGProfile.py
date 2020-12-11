@@ -109,6 +109,6 @@ class EEGProfile :
             f = open(fileName,'wb')
             pickle.dump(self,f)
             f.close()
-            print('save %s complete',fileName)
+            print('save %s complete'%(fileName))
         except :
             print('something wrong while saving at %s',fileName)

@@ -6,7 +6,7 @@ Observe format is array of [start,end,jump]
 [1,30,1] mean [1,2,3,4,5,...,30]
 [31,100,5] mean [31,36,...]
 
-ex
+eg
 observeRange = [
   [1,30,1],
   [31,100,5],
@@ -20,8 +20,8 @@ will compute to observe freq list
 ]
 """
 
-deviceName="mindWave"
-saveDirectory = "./profile_result2"
+deviceName="mindwave"
+saveDirectory = "./profile_result88"
 
 observeTime = 60 #second
 

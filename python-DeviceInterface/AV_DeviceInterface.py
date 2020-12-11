@@ -2010,7 +2010,11 @@ class EEGMonitorThread(Thread):
             # if (self.round >= 20) :
             #     break
             time.sleep(1)
-
+def setDDSFreq(ser="",freq=1) :
+    setFreqCommand = 'WMF%s'%(str(freq))
+    command = bytes(setFreqCommand,'ascii')+b'\x0a'
+    print(command)
+    return ser.read()
 
 if __name__ == '__main__':
 
@@ -2032,7 +2036,14 @@ if __name__ == '__main__':
     from numpy import load
     # if comport_l is not None:
     if True :
+        # ser = serial.Serial(
+        #     port = 'COM10',
+        #     baudrate=115200,
+        # )
         for freq in observeFreqRange(observeConfig.freqRange) :
+            # ser.isOpen()
+            # res = setDDSFreq(ser=ser,freq=freq)
+
             # iaware_l = EEGClientThread(N_channels_p=1, samples_duration_p=2)
             # iaware_l.createMindWaveMobile2Client(Name_p="iAware-MindwaveMobile2", COM_p=comport_l)
 
@@ -2053,9 +2064,9 @@ if __name__ == '__main__':
 
             samplingInfo = SamplingInfo(
                 samplingRate=512,
-                samplingTime=60,
+                samplingTime=observeConfig.observeTime,
             )
-
+  
             setting = DDSSetting(
                 freq=freq,
                 amp=1,
