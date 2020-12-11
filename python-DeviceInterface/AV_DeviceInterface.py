@@ -9,19 +9,22 @@ import serial
 import sys
 import time
 import traceback
+import pickle
 
 from pythonosc import dispatcher, osc_server
 from scipy import fftpack, signal
 from socket import SHUT_RDWR
 from threading import Thread
 from time import sleep
+from EEGProfile import EEGProfile,DDSSetting,SamplingInfo,observeFreqRange
+import observeConfig
 
 import matplotlib.pyplot as plt
 
 ROOTPATH_g = (os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")).split("/Data")[0]
 
 #sys.path.append(ROOTPATH_g + "/Data/Work/UtilSrcCode/python-Bluetooth")
-sys.path.append( "D:/freelance/EGG/python-bluetooth-interface/python-Bluetooth")
+sys.path.append( "E:/freelance/eeg-bluetooth/python-Bluetooth")
 from AV_bluetooth import AV_ble_win10_getCOM
 
 class DeviceInterface(object):
@@ -243,7 +246,7 @@ class MindWaveMobile2Thread(EEGInterface, Thread):
 
                                             self._rawValue = rawValue_l
                                             k+=1
-                                            if (k >= 512*60) :
+                                            if (k >= 512*observeConfig.observeTime) :
                                                 self._running = False
 
                                             
@@ -2008,6 +2011,7 @@ class EEGMonitorThread(Thread):
             #     break
             time.sleep(1)
 
+
 if __name__ == '__main__':
 
     # _test()
@@ -2025,52 +2029,49 @@ if __name__ == '__main__':
     comport_l = "COM8"
     
 
-    
-    if comport_l is not None:
-        iaware_l = EEGClientThread(N_channels_p=1, samples_duration_p=2)
-        iaware_l.createMindWaveMobile2Client(Name_p="iAware-MindwaveMobile2", COM_p=comport_l)
+    from numpy import load
+    # if comport_l is not None:
+    if True :
+        for freq in observeFreqRange(observeConfig.freqRange) :
+            # iaware_l = EEGClientThread(N_channels_p=1, samples_duration_p=2)
+            # iaware_l.createMindWaveMobile2Client(Name_p="iAware-MindwaveMobile2", COM_p=comport_l)
 
-        # iaware_l.run()
-        iaware_monitor = EEGMonitorThread(iaware_l=iaware_l,t_name="EEG_Monitor_test")
-        iaware_monitor.start()
-        iaware_l.start()
-        iaware_l.join()
+            # iaware_monitor = EEGMonitorThread(iaware_l=iaware_l,t_name="EEG_Monitor_test")
+            # iaware_monitor.start()
+            # iaware_l.start()
+            # iaware_l.join()
 
-        lastResult = iaware_monitor.getRawData()
-        # lastResult = lastResult[513:]+lastR
-        print(lastResult[0:10])
-        reArrangeResult = np.concatenate((lastResult[512:],lastResult[0:512]),axis=0 )
-        np.savetxt('data.csv', reArrangeResult, delimiter=',')
-        
-        # print(reArrangeResult)
-        # fig, axs = plt.subplots(2)
-        # fig.suptitle('lastResult and reArrangeResult')
-        # axs[0].plot(lastResult)
-        # axs[1].plot(reArrangeResult)
-        # plt.show()
-        iaware_monitor.stop()
+            # lastResult = iaware_monitor.getRawData()
 
-        print("Result : ",lastResult)
-        # plt.plot(lastResult)
-        # plt.show()
+            # reArrangeResult = np.concatenate((lastResult[512:],lastResult[0:512]),axis=0 )
 
-        [freq_positive_l, fft_l, fft_amp_l, fft_pw_l, fft_gain_l] = AV_fft(fs_p=512,signal_p=reArrangeResult)
-        # print(fft_pw_l)
-        # plt.plot(fft_amp_l)
-        # plt.plot(fft_pw_l)
-        # plt.legend(["fft_amp_l", "fft_pw_l"])
-        # print("freq_positive_l",freq_positive_l)
-        saveData = np.concatenate((reArrangeResult,freq_positive_l,fft_amp_l,fft_pw_l),axis=0)
-        print(saveData)
-        np.save('./backup/data.npy',saveData)
+            # iaware_monitor.stop()
 
-        fig, axs = plt.subplots(3)
-        fig.suptitle('fft_amp_l and fft_pw_l')
-        axs[0].plot(reArrangeResult)
-        axs[1].plot(freq_positive_l,fft_amp_l,'go-')
-        axs[2].plot(freq_positive_l,fft_pw_l,'go-')
+            # [freq_positive_l, fft_l, fft_amp_l, fft_pw_l, fft_gain_l] = AV_fft(fs_p=512,signal_p=reArrangeResult)
+            # saveData = np.concatenate((reArrangeResult,freq_positive_l,fft_amp_l,fft_pw_l),axis=0)
+            saveData = load('data.npy')
 
-        plt.show()
+            samplingInfo = SamplingInfo(
+                samplingRate=512,
+                samplingTime=60,
+            )
+
+            setting = DDSSetting(
+                freq=freq,
+                amp=1,
+                offset=5,
+                duty=0.1,
+                phase=0,
+            )
+
+            profile = EEGProfile(
+                rawValue=saveData,
+                setting=setting,
+                samplingInfo=samplingInfo,
+            )
+
+            profile.save()
+
     # mwmobile_l = MindWaveMobile2Thread(Name_p="Mobile")
     # print(mwmobile_l.getN_channels())
     # print(mwmobile_l.getSamplingRate())
