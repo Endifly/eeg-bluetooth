@@ -16,7 +16,7 @@ from scipy import fftpack, signal
 from socket import SHUT_RDWR
 from threading import Thread
 from time import sleep
-from EEGProfile import EEGProfile,DDSSetting,SamplingInfo,observeFreqRange
+from Lib.EEGProfile import EEGProfile,DDSSetting,SamplingInfo,observeFreqRange
 import observeConfig
 
 import matplotlib.pyplot as plt
@@ -2011,9 +2011,19 @@ class EEGMonitorThread(Thread):
             #     break
             time.sleep(1)
 def setDDSFreq(ser="",freq=1) :
-    setFreqCommand = 'WMF%s'%(str(freq))
+    setFreqCommand = 'WMF%s'%(str(freq*1000000))
     command = bytes(setFreqCommand,'ascii')+b'\x0a'
     print(command)
+    ser.write(command)
+    return ser.read()
+
+def setDDSAmp(ser="",vol=0.001) :
+    if (vol >= 0.01) :
+      return
+    setAmpCommand = 'WMA%s'%(str(vol))
+    command = bytes(setAmpCommand,'ascii')+b'\x0a'
+    print(command)
+    ser.write(command)
     return ser.read()
 
 if __name__ == '__main__':
@@ -2033,34 +2043,35 @@ if __name__ == '__main__':
     comport_l = "COM8"
     
 
-    from numpy import load
-    # if comport_l is not None:
-    if True :
-        # ser = serial.Serial(
-        #     port = 'COM10',
-        #     baudrate=115200,
-        # )
+    # from numpy import load
+    if comport_l is not None:
+        ser = serial.Serial(
+            port = observeConfig.signal_gen_port,
+            baudrate=observeConfig.signal_gen_buardrate,
+        )
+        ser.isOpen()
+        setDDSAmp()
         for freq in observeFreqRange(observeConfig.freqRange) :
-            # ser.isOpen()
-            # res = setDDSFreq(ser=ser,freq=freq)
+            ser.isOpen()
+            setDDSFreq(freq=freq)
 
-            # iaware_l = EEGClientThread(N_channels_p=1, samples_duration_p=2)
-            # iaware_l.createMindWaveMobile2Client(Name_p="iAware-MindwaveMobile2", COM_p=comport_l)
+            iaware_l = EEGClientThread(N_channels_p=1, samples_duration_p=2)
+            iaware_l.createMindWaveMobile2Client(Name_p="iAware-MindwaveMobile2", COM_p=comport_l)
 
-            # iaware_monitor = EEGMonitorThread(iaware_l=iaware_l,t_name="EEG_Monitor_test")
-            # iaware_monitor.start()
-            # iaware_l.start()
-            # iaware_l.join()
+            iaware_monitor = EEGMonitorThread(iaware_l=iaware_l,t_name="EEG_Monitor_test")
+            iaware_monitor.start()
+            iaware_l.start()
+            iaware_l.join()
 
-            # lastResult = iaware_monitor.getRawData()
+            lastResult = iaware_monitor.getRawData()
 
-            # reArrangeResult = np.concatenate((lastResult[512:],lastResult[0:512]),axis=0 )
+            reArrangeResult = np.concatenate((lastResult[512:],lastResult[0:512]),axis=0 )
 
-            # iaware_monitor.stop()
+            iaware_monitor.stop()
 
-            # [freq_positive_l, fft_l, fft_amp_l, fft_pw_l, fft_gain_l] = AV_fft(fs_p=512,signal_p=reArrangeResult)
-            # saveData = np.concatenate((reArrangeResult,freq_positive_l,fft_amp_l,fft_pw_l),axis=0)
-            saveData = load('data.npy')
+            [freq_positive_l, fft_l, fft_amp_l, fft_pw_l, fft_gain_l] = AV_fft(fs_p=512,signal_p=reArrangeResult)
+            saveData = np.concatenate((reArrangeResult,freq_positive_l,fft_amp_l,fft_pw_l),axis=0)
+            # saveData = load('./Lib/data.npy')
 
             samplingInfo = SamplingInfo(
                 samplingRate=512,
@@ -2069,9 +2080,9 @@ if __name__ == '__main__':
   
             setting = DDSSetting(
                 freq=freq,
-                amp=1,
-                offset=5,
-                duty=0.1,
+                amp=observeConfig.signal_gen_amp,
+                offset=0,
+                duty=0.5,
                 phase=0,
             )
 
@@ -2086,5 +2097,6 @@ if __name__ == '__main__':
     # mwmobile_l = MindWaveMobile2Thread(Name_p="Mobile")
     # print(mwmobile_l.getN_channels())
     # print(mwmobile_l.getSamplingRate())
+    input("Press Enter to continue...")
 
     pass

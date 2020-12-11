@@ -1,13 +1,13 @@
 """
-saved file will use name = devinceName-freq.pkl
+saved file will use name = deviceName-freq.pkl
 and save in [saveDirectory]/filename
 
-Observe format is array of [start,end,jump]
+freqRange format is array of [start,end,jump]
 [1,30,1] mean [1,2,3,4,5,...,30]
 [31,100,5] mean [31,36,...]
 
 eg
-observeRange = [
+freqRange = [
   [1,30,1],
   [31,100,5],
   [101,256,10]
@@ -21,12 +21,17 @@ will compute to observe freq list
 """
 
 deviceName="mindwave"
-saveDirectory = "./profile_result88"
+saveDirectory = "./profile_result"
 
 observeTime = 60 #second
+
+signal_gen_port = 'COM10'
+signal_gen_buardrate = 115200
+signal_gen_amp = 0.001 #V
 
 freqRange = [
   [1,30,1],
   [31,100,5],
   [101,256,10]
 ]
+
